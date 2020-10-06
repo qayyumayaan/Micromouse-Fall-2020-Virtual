@@ -58,6 +58,13 @@ void Map::search(short mode) {
         cerr << "Pathing to center..." << endl;
 
         while(internalMap[currX][currY].floodVal != 0) {
+
+            if(API::wasReset()) {
+                cerr << "Resetting!" << endl;
+                deleteWalls();
+                return;
+            }
+
             wallCheck(currX,currY,dir);
 
             short stepIndex = floodStep(internalMap[currX][currY],dir);
@@ -87,6 +94,13 @@ void Map::search(short mode) {
 
         bool pathStatus = true;
         while(internalMap[currX][currY].floodVal != 0) {
+
+            if(API::wasReset()) {
+                cerr << "Resetting!" << endl;
+                deleteWalls();
+                return;
+            }
+
             wallCheck(currX,currY,dir);
 
             int tempVal = internalMap[currX][currY].floodVal;
@@ -149,6 +163,13 @@ void Map::search(short mode) {
 
     cerr << "Pathing back to starting point..." << endl;
     while(internalMap[currX][currY].floodVal != 0) {
+
+        if(API::wasReset()) {
+            cerr << "Resetting!" << endl;
+            deleteWalls();
+            return;
+        }
+
         wallCheck(currX,currY,dir);
 
         short stepIndex = floodStep(internalMap[currX][currY],dir);
@@ -237,6 +258,12 @@ void Map::traverse(short mode) {
     char dir = 'n';
 
     while(internalMap[currX][currY].floodVal != 0) {
+
+        if(API::wasReset()) {
+            cerr << "Resetting!" << endl;
+            deleteWalls();
+            return;
+        }
 
         short stepIndex;
         if(mode == 0) {
