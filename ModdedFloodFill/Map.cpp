@@ -232,7 +232,7 @@ void Map::search(short mode) {
 
     if(solutionCheck(solution)) {
         cerr << "Maze mapping complete!" << endl;
-        traverse(0);
+        traverse();
     }
     else {
         cerr << "Retracing maze..." << endl;
@@ -249,7 +249,7 @@ bool Map::solutionCheck(stack<Coor> trace) {
     return true;
 }
 
-void Map::traverse(short mode) {
+void Map::traverse() {
 
     cerr << "Starting next run!" << endl;
 
@@ -266,17 +266,11 @@ void Map::traverse(short mode) {
         }
 
         short stepIndex;
-        if(mode == 0) {
-            if(currX > solution.top().x) stepIndex = 0;
-            else if(currX < solution.top().x) stepIndex = 1;
-            else if(currY > solution.top().y) stepIndex = 2;
-            else {stepIndex = 3;}
-            solution.pop();
-        }
-        else {
-            wallCheck(currX,currY,dir);
-            stepIndex = findMinIndex(neighborCheck(internalMap[currX][currY]),dir);
-        }
+        if(currX > solution.top().x) stepIndex = 0;
+        else if(currX < solution.top().x) stepIndex = 1;
+        else if(currY > solution.top().y) stepIndex = 2;
+        else {stepIndex = 3;}
+        solution.pop();
 
         dir = turnMouse(dir,stepIndex);
         switch (stepIndex) {

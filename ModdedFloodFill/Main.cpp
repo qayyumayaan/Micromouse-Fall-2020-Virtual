@@ -14,5 +14,4 @@ int main(int argc, char* argv[]) {
     API::setText(0, 0, "abc");
     Map maze;
     maze.search(0);
-    if(API::wasReset()) API::ackReset();
 }

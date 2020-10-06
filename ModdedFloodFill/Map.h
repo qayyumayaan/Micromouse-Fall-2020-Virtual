@@ -17,10 +17,10 @@ private:
 
     //Struct for maze cells
     struct Cell {
-        bool *northWall;
-        bool *southWall;
-        bool *eastWall;
-        bool *westWall;
+        bool *northWall = NULL;
+        bool *southWall = NULL;
+        bool *eastWall = NULL;
+        bool *westWall = NULL;
         Coor coords;
         int floodVal = 0;
     };
@@ -74,5 +74,5 @@ public:
     void search(short);
 
     // Utilizes the "solution" Cell stack to traverse to the center
-    void traverse(short);
+    void traverse();
 };
