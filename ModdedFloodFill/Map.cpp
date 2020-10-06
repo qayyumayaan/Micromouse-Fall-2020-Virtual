@@ -48,7 +48,7 @@ Map::Map() {
 
 void Map::search(short mode) {
 
-    // Starting cell is on the bottom left of the maze at (0,0)
+    // Starting cell is on the bottom left of the maze at (0,0) with default direction being North
     short currX = 0;
     short currY = 0;
     char dir = 'n';
