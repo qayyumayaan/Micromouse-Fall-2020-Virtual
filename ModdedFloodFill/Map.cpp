@@ -116,6 +116,7 @@ void Map::search(short mode) {
         if(pathStatus) {
             cerr << "Run complete!" << endl;
             cerr << "Speedrun achieved!" << endl;
+            deleteWalls();
             return;
         }
     }
