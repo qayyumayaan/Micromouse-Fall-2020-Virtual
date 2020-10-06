@@ -11,25 +11,29 @@ using namespace std;
 // Map object constructor
 Map::Map() {
 
-    // Initialize map
+    // Initialize map and walls
     for(short i = 0; i < 16; i++) {
         for(short j = 0; j < 16; j++) {
             internalMap[i][j].coords.x = i;
             internalMap[i][j].coords.y = j;
+            internalMap[i][j].westWall = &xWalls[i][j];
+            internalMap[i][j].eastWall = &xWalls[i+1][j];
+            internalMap[i][j].southWall = &yWalls[i][j];
+            internalMap[i][j].northWall = &yWalls[i][j+1];
             if(i==0) {
-                internalMap[i][j].westWall = true;
+                *internalMap[i][j].westWall = true;
                 API::setWall(i,j,'w');
             }
             if(i==15) {
-                internalMap[i][j].eastWall = true;
+                *internalMap[i][j].eastWall = true;
                 API::setWall(i,j,'e');
             }
             if(j==0) {
-                internalMap[i][j].southWall = true;
+                *internalMap[i][j].southWall = true;
                 API::setWall(i,j,'s');
             }
             if(j==15) {
-                internalMap[i][j].northWall = true;
+                *internalMap[i][j].northWall = true;
                 API::setWall(i,j,'n');
             }
             if(i < 8 && j < 8) internalMap[i][j].floodVal = 7-i + 7-j;
@@ -44,64 +48,85 @@ Map::Map() {
 
 void Map::search(short mode) {
 
-    cerr << "Starting maze search!" << endl;
-
     // Starting cell is on the bottom left of the maze at (0,0)
     short currX = 0;
     short currY = 0;
     char dir = 'n';
 
-    cerr << "Pathing to center..." << endl;
-    while(internalMap[currX][currY].floodVal != 0) {
-        wallCheck(currX,currY,dir);
+    if(mode == 0) {
+        cerr << "Starting maze search!" << endl;
+        cerr << "Pathing to center..." << endl;
 
-        short stepIndex = floodStep(internalMap[currX][currY],dir);
+        while(internalMap[currX][currY].floodVal != 0) {
+            wallCheck(currX,currY,dir);
 
-        dir = turnMouse(dir,stepIndex);
-        switch (stepIndex) {
-        case 0:
-            currX--;
-            break;
-        case 1:
-            currX++;
-            break;
-        case 2:
-            currY--;
-            break;
-        default:
-            currY++;
+            short stepIndex = floodStep(internalMap[currX][currY],dir);
+
+            dir = turnMouse(dir,stepIndex);
+            switch (stepIndex) {
+            case 0:
+                currX--;
+                break;
+            case 1:
+                currX++;
+                break;
+            case 2:
+                currY--;
+                break;
+            default:
+                currY++;
+            }
+
+            cerr << "Moving to (" << currX << "," << currY << ")" << endl;
+            API::moveForward(1);
         }
+    }
+    else {
+        cerr << "Starting next run!" << endl;
+        cerr << "Pathing to center..." << endl;
 
-        cerr << "Moving to (" << currX << "," << currY << ")" << endl;
-        API::moveForward(1);
+        bool pathStatus = true;
+        while(internalMap[currX][currY].floodVal != 0) {
+            wallCheck(currX,currY,dir);
+
+            int tempVal = internalMap[currX][currY].floodVal;
+
+            short stepIndex = floodStep(internalMap[currX][currY],dir);
+
+            if(tempVal != internalMap[currX][currY].floodVal) pathStatus = false;
+
+            dir = turnMouse(dir,stepIndex);
+            switch (stepIndex) {
+            case 0:
+                currX--;
+                break;
+            case 1:
+                currX++;
+                break;
+            case 2:
+                currY--;
+                break;
+            default:
+                currY++;
+            }
+
+            cerr << "Moving to (" << currX << "," << currY << ")" << endl;
+            API::moveForward(1);
+        }
+        if(pathStatus) {
+            cerr << "Run complete!" << endl;
+            cerr << "Speedrun achieved!" << endl;
+            return;
+        }
     }
 
     cerr << "Center reached!" << endl;
     short finX = currX;
     short finY = currY;
 
-    if(mode == 0) {
-        cerr << "Scouting center!" << endl;
-        dir = centerFill(currX,currY,dir);
-        cerr << "Center scouted!" << endl;
-    }
-    else {
-        API::turnRight();
-        API::turnRight();
-        switch (dir) {
-        case 'w':
-            dir = 'e';
-            break;
-        case 'e':
-            dir = 'w';
-            break;
-        case 's':
-            dir = 'n';
-            break;
-        default:
-            dir = 's';
-        }
-    }
+    cerr << "Setting center walls!" << endl;
+    centerWalls(currX,currY,dir);
+    cerr << "Center walls set!" << endl;
 
     int maxVal = internalMap[0][0].floodVal;
     for(short i = 0; i < 16; i++) {
@@ -164,12 +189,15 @@ void Map::search(short mode) {
 
     cerr << "Flipping cell values!" << endl;
     maxVal = internalMap[finX][finY].floodVal;
+    vector<vector<int>> mapCheck(16,vector<int>(16));
     for(int i = 0; i < 16; i++) {
         for(int j = 0; j < 16; j++) {
             internalMap[i][j].floodVal = abs(maxVal - internalMap[i][j].floodVal);
+            mapCheck[i][j] = internalMap[i][j].floodVal;
             API::setText(i,j,to_string(internalMap[i][j].floodVal));
         }
     }
+
     for(short i = 0; i < 16; i++) {
         for(short j = 0; j < 16; j++) {
             if(i == finX && j == finY) {
@@ -180,13 +208,28 @@ void Map::search(short mode) {
     }
     dir = turnMouse(dir,3);
 
-    cerr << "Maze mapping complete!" << endl;
-    traverse(0);
+    if(solutionCheck(solution)) {
+        cerr << "Maze mapping complete!" << endl;
+        traverse(0);
+    }
+    else {
+        cerr << "Retracing maze..." << endl;
+        search(1);
+    }
+}
+
+bool Map::solutionCheck(stack<Coor> trace) {
+    while(trace.size() > 1) {
+        int valCheck = internalMap[trace.top().x][trace.top().y].floodVal;
+        trace.pop();
+        if(valCheck != internalMap[trace.top().x][trace.top().y].floodVal+1) return false;
+    }
+    return true;
 }
 
 void Map::traverse(short mode) {
 
-    cerr << "Starting speed run!" << endl;
+    cerr << "Starting next run!" << endl;
 
     short currX = 0;
     short currY = 0;
@@ -202,7 +245,10 @@ void Map::traverse(short mode) {
             else {stepIndex = 3;}
             solution.pop();
         }
-        else stepIndex = findMinIndex(neighborCheck(internalMap[currX][currY]),dir);
+        else {
+            wallCheck(currX,currY,dir);
+            stepIndex = findMinIndex(neighborCheck(internalMap[currX][currY]),dir);
+        }
 
         dir = turnMouse(dir,stepIndex);
         switch (stepIndex) {
@@ -223,7 +269,9 @@ void Map::traverse(short mode) {
         API::moveForward(1);
     }
 
-    cerr << "Speed run finished!" << endl;
+    cerr << "Run complete!" << endl;
+    cerr << "Speedrun achieved!" << endl;
+    deleteWalls();
 }
 
 void Map::wallCheck(short currX, short currY, char dir) {
@@ -255,32 +303,16 @@ void Map::wallCheck(short currX, short currY, char dir) {
         API::setWall(currX,currY,front);
         switch (front) {
         case 'w':
-            if(currX > 0) {
-                API::setWall(currX-1,currY,'e');
-                internalMap[currX-1][currY].eastWall = true;
-            }
-            internalMap[currX][currY].westWall = true;
+            *internalMap[currX][currY].westWall = true;
             break;
         case 'e':
-            if(currX < 15) {
-                API::setWall(currX+1,currY,'w');
-                internalMap[currX+1][currY].westWall = true;
-            }
-            internalMap[currX][currY].eastWall = true;
+            *internalMap[currX][currY].eastWall = true;
             break;
         case 's':
-            if(currY > 0) {
-                API::setWall(currX,currY-1,'n');
-                internalMap[currX][currY-1].northWall = true;
-            }
-            internalMap[currX][currY].southWall = true;
+            *internalMap[currX][currY].southWall = true;
             break;
         default:
-            if(currY < 15) {
-                API::setWall(currX,currY+1,'s');
-                internalMap[currX][currY+1].southWall = true;
-            }
-            internalMap[currX][currY].northWall = true;
+            *internalMap[currX][currY].northWall = true;
         }
     }
 
@@ -288,32 +320,16 @@ void Map::wallCheck(short currX, short currY, char dir) {
         API::setWall(currX,currY,left);
         switch (left) {
         case 'w':
-            if(currX > 0) {
-                API::setWall(currX-1,currY,'e');
-                internalMap[currX-1][currY].eastWall = true;
-            }
-            internalMap[currX][currY].westWall = true;
+            *internalMap[currX][currY].westWall = true;
             break;
         case 'e':
-            if(currX < 15) {
-                API::setWall(currX+1,currY,'w');
-                internalMap[currX+1][currY].westWall = true;
-            }
-            internalMap[currX][currY].eastWall = true;
+            *internalMap[currX][currY].eastWall = true;
             break;
         case 's':
-            if(currY > 0) {
-                API::setWall(currX,currY-1,'n');
-                internalMap[currX][currY-1].northWall = true;
-            }
-            internalMap[currX][currY].southWall = true;
+            *internalMap[currX][currY].southWall = true;
             break;
         default:
-            if(currY < 15) {
-                API::setWall(currX,currY+1,'s');
-                internalMap[currX][currY+1].southWall = true;
-            }
-            internalMap[currX][currY].northWall = true;
+            *internalMap[currX][currY].northWall = true;
         }
     }
 
@@ -321,32 +337,16 @@ void Map::wallCheck(short currX, short currY, char dir) {
         API::setWall(currX,currY,right);
         switch (right) {
         case 'w':
-            if(currX > 0) {
-                API::setWall(currX-1,currY,'e');
-                internalMap[currX-1][currY].eastWall = true;
-            }
-            internalMap[currX][currY].westWall = true;
+            *internalMap[currX][currY].westWall = true;
             break;
         case 'e':
-            if(currX < 15) {
-                API::setWall(currX+1,currY,'w');
-                internalMap[currX+1][currY].westWall = true;
-            }
-            internalMap[currX][currY].eastWall = true;
+            *internalMap[currX][currY].eastWall = true;
             break;
         case 's':
-            if(currY > 0) {
-                API::setWall(currX,currY-1,'n');
-                internalMap[currX][currY-1].northWall = true;
-            }
-            internalMap[currX][currY].southWall = true;
+            *internalMap[currX][currY].southWall = true;
             break;
         default:
-            if(currY < 15) {
-                API::setWall(currX,currY+1,'s');
-                internalMap[currX][currY+1].southWall = true;
-            }
-            internalMap[currX][currY].northWall = true;
+            *internalMap[currX][currY].northWall = true;
         }
     }
 }
@@ -377,116 +377,206 @@ void Map::flooder(Cell curr) {
     }
 }
 
-char Map::centerFill(short currX, short currY, char dir) {
-    char newDir = ' ';
-    switch (currX) {
-    case 7:
-        switch (currY) {
-        case 7:
-            switch (dir) {
-            case 'e':
-                centerWalls(currX,currY,dir/*,{1,3,0,2}*/);
-                newDir = 's';
-                break;
-            default:
-                centerWalls(currX,currY,dir/*,{3,1,2,0}*/);
-                newDir = 'w';
-            }
-            return newDir;
-        default:
-            switch (dir) {
-            case 'e':
-                centerWalls(currX,currY,dir/*,{1,2,0,3}*/);
-                newDir = 'n';
-                break;
-            default:
-                centerWalls(currX,currY,dir/*,{2,1,3,0}*/);
-                newDir = 'w';
-            }
-            return newDir;
-        }
-        break;
-    default:
-        switch (currY) {
-        case 7:
-            switch (dir) {
-            case 'w':
-                centerWalls(currX,currY,dir/*,{0,3,1,2}*/);
-                newDir = 's';
-                break;
-            default:
-                centerWalls(currX,currY,dir/*,{3,0,2,1}*/);
-                newDir = 'e';
-            }
-            return newDir;
-        default:
-            switch (dir) {
-            case 'w':
-                centerWalls(currX,currY,dir/*,{0,2,1,3}*/);
-                newDir = 'n';
-                break;
-            default:
-                centerWalls(currX,currY,dir/*,{2,0,3,1}*/);
-                newDir = 'e';
-            }
-            return newDir;
-        }
-    }
-}
-
 void Map::centerWalls(short currX, short currY, char dir) {
-//    vector<short> steps;
-//    for(short i = 0; i < 4; i++) {
-//        wallCheck(currX,currY,dir);
-//        switch (steps[i]) {
-//        case 0:
-//            currX--;
-//            break;
-//        case 1:
-//            currX++;
-//            break;
-//        case 2:
-//            currY--;
-//            break;
-//        default:
-//            currY++;
-//        }
-//        dir = turnMouse(dir,steps[i]);
-//        API::moveForward();
-//    }
     switch (dir) {
     case 'w':
         if(currX == 8 && currY == 8) {
-            internalMap[8][8].northWall = true;
-            internalMap[8][9].southWall = true;
-            internalMap[7][8].northWall = true;
-            internalMap[7][9].southWall = true;
-            internalMap[7][8].westWall = true;
-            internalMap[7][6].eastWall = true;
-            internalMap[7][7].southWall = true;
-            internalMap[7][6].northWall = true;
-            internalMap[8][7].southWall = true;
-            internalMap[8][6].northWall = true;
+            API::setWall(8,8,'n');
+            *internalMap[8][8].northWall = true;
+
+            API::setWall(7,8,'n');
+            *internalMap[7][8].northWall = true;
+
+            API::setWall(7,8,'w');
+            *internalMap[7][8].westWall = true;
+
+            API::setWall(7,7,'w');
+            *internalMap[7][7].westWall = true;
+
+            API::setWall(7,7,'s');
+            *internalMap[7][7].southWall = true;
+
+            API::setWall(8,7,'s');
+            *internalMap[8][7].southWall = true;
+
+            API::setWall(8,7,'e');
+            *internalMap[8][7].eastWall = true;
         }
-    case 'e':
-    case 's':
-    default:
+        else {
+            API::setWall(8,7,'s');
+            *internalMap[8][7].southWall = true;
+
+            API::setWall(7,7,'s');
+            *internalMap[7][7].southWall = true;
+
+            API::setWall(7,7,'w');
+            *internalMap[7][7].westWall = true;
+
+            API::setWall(7,8,'w');
+            *internalMap[7][8].westWall = true;
+
+            API::setWall(7,8,'n');
+            *internalMap[7][8].northWall = true;
+
+            API::setWall(8,8,'n');
+            *internalMap[8][8].northWall = true;
+
+            API::setWall(8,8,'e');
+            *internalMap[8][8].eastWall = true;
+        }
         break;
+    case 'e':
+        if(currX == 7 && currY == 7) {
+            API::setWall(7,7,'s');
+            *internalMap[7][7].southWall = true;
+
+            API::setWall(8,7,'s');
+            *internalMap[8][7].southWall = true;
+
+            API::setWall(8,7,'e');
+            *internalMap[8][7].eastWall = true;
+
+            API::setWall(8,8,'e');
+            *internalMap[8][8].eastWall = true;
+
+            API::setWall(8,8,'n');
+            *internalMap[8][8].northWall = true;
+
+            API::setWall(7,8,'n');
+            *internalMap[7][8].northWall = true;
+
+            API::setWall(7,8,'w');
+            *internalMap[7][8].westWall = true;
+        }
+        else {
+            API::setWall(7,8,'n');
+            *internalMap[7][8].northWall = true;
+
+            API::setWall(8,8,'n');
+            *internalMap[8][8].northWall = true;
+
+            API::setWall(8,8,'e');
+            *internalMap[8][8].eastWall = true;
+
+            API::setWall(8,7,'e');
+            *internalMap[8][7].eastWall = true;
+
+            API::setWall(8,7,'s');
+            *internalMap[8][7].southWall = true;
+
+            API::setWall(7,7,'s');
+            *internalMap[7][7].southWall = true;
+
+            API::setWall(7,7,'w');
+            *internalMap[7][7].westWall = true;
+        }
+        break;
+    case 's':
+        if(currX == 8 && currY == 8) {
+            API::setWall(8,8,'e');
+            *internalMap[8][8].eastWall = true;
+
+            API::setWall(8,7,'e');
+            *internalMap[8][7].eastWall = true;
+
+            API::setWall(8,7,'s');
+            *internalMap[8][7].southWall = true;
+
+            API::setWall(7,7,'s');
+            *internalMap[7][7].southWall = true;
+
+            API::setWall(7,7,'w');
+            *internalMap[7][7].westWall = true;
+
+            API::setWall(7,8,'w');
+            *internalMap[7][8].westWall = true;
+
+            API::setWall(7,8,'n');
+            *internalMap[7][8].northWall = true;
+        }
+        else {
+            API::setWall(7,8,'w');
+            *internalMap[7][8].westWall = true;
+
+            API::setWall(7,7,'w');
+            *internalMap[7][7].westWall = true;
+
+            API::setWall(7,7,'s');
+            *internalMap[7][7].southWall = true;
+
+            API::setWall(8,7,'s');
+            *internalMap[8][7].southWall = true;
+
+            API::setWall(8,7,'e');
+            *internalMap[8][7].eastWall = true;
+
+            API::setWall(8,8,'e');
+            *internalMap[8][8].eastWall = true;
+
+            API::setWall(8,8,'n');
+            *internalMap[8][8].northWall = true;
+        }
+        break;
+    default:
+        if(currX == 7 && currY == 7) {
+            API::setWall(7,7,'w');
+            *internalMap[7][7].westWall = true;
+
+            API::setWall(7,8,'w');
+            *internalMap[7][8].westWall = true;
+
+            API::setWall(7,8,'n');
+            *internalMap[7][8].northWall = true;
+
+            API::setWall(8,8,'n');
+            *internalMap[8][8].northWall = true;
+
+            API::setWall(8,8,'e');
+            *internalMap[8][8].eastWall = true;
+
+            API::setWall(8,7,'e');
+            *internalMap[8][7].eastWall = true;
+
+            API::setWall(8,7,'s');
+            *internalMap[8][7].southWall = true;
+        }
+        else {
+            API::setWall(8,7,'e');
+            *internalMap[8][7].eastWall = true;
+
+            API::setWall(8,8,'e');
+            *internalMap[8][8].eastWall = true;
+
+            API::setWall(8,8,'n');
+            *internalMap[8][8].northWall = true;
+
+            API::setWall(7,8,'n');
+            *internalMap[7][8].northWall = true;
+
+            API::setWall(7,8,'w');
+            *internalMap[7][8].westWall = true;
+
+            API::setWall(7,7,'w');
+            *internalMap[7][7].westWall = true;
+
+            API::setWall(7,7,'s');
+            *internalMap[7][7].southWall = true;
+        }
     }
 }
 
 vector<int> Map::neighborCheck(Cell currCell) {
     vector<int> neighbors = {-1,-1,-1,-1};
-    if(currCell.coords.x > 0 && currCell.westWall == false) {
+    if(*currCell.westWall == false) {
         neighbors[0] = internalMap[currCell.coords.x-1][currCell.coords.y].floodVal;
     }
-    if(currCell.coords.x < 15 && currCell.eastWall == false) {
+    if(*currCell.eastWall == false) {
         neighbors[1] = internalMap[currCell.coords.x+1][currCell.coords.y].floodVal;
     }
-    if(currCell.coords.y > 0 && currCell.southWall == false) {
+    if(*currCell.southWall == false) {
         neighbors[2] = internalMap[currCell.coords.x][currCell.coords.y-1].floodVal;
     }
-    if(currCell.coords.y < 15 && currCell.northWall == false) {
+    if(*currCell.northWall == false) {
         neighbors[3] = internalMap[currCell.coords.x][currCell.coords.y+1].floodVal;
     }
     return neighbors;
@@ -615,6 +705,17 @@ char Map::turnMouse(char dir, short next) {
             return 's';
         default:
             return 'n';
+        }
+    }
+}
+
+void Map::deleteWalls() {
+    for(short i = 0; i < 16; i++) {
+        for(short j = 0; j < 16; j++) {
+            delete internalMap[i][j].westWall;
+            delete internalMap[i][j].eastWall;
+            delete internalMap[i][j].southWall;
+            delete internalMap[i][j].northWall;
         }
     }
 }

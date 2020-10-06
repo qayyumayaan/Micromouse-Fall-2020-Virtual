@@ -16,10 +16,10 @@ private:
     };
 
     struct Cell {
-        bool northWall = false;
-        bool southWall = false;
-        bool eastWall = false;
-        bool westWall = false;
+        bool *northWall;
+        bool *southWall;
+        bool *eastWall;
+        bool *westWall;
         Coor coords;
         int floodVal = 0;
     };
@@ -27,9 +27,14 @@ private:
     // Personal maze map to keep track of
     Cell internalMap[16][16];
 
+    bool xWalls[17][16];
+
+    bool yWalls[16][17];
+
     stack<Coor> solution;
 
     // Checks and updates walls on the given cell and its neighbors based on the direction of the bot
+    bool solutionCheck(stack<Coor>);
     short floodStep(Cell,char);
     void flooder(Cell);
     vector<int> neighborCheck(Cell);
@@ -39,6 +44,7 @@ private:
     char turnMouse(char,short);
     char centerFill(short,short,char);
     void centerWalls(short,short,char);
+    void deleteWalls();
 public:
     // Map object constructor which initializes the internalMap
     Map();
