@@ -17,10 +17,10 @@ private:
 
     //Struct for maze cells
     struct Cell {
-        bool *northWall = NULL;
-        bool *southWall = NULL;
-        bool *eastWall = NULL;
-        bool *westWall = NULL;
+        bool *northWall = nullptr;
+        bool *southWall = nullptr;
+        bool *eastWall = nullptr;
+        bool *westWall = nullptr;
         Coor coords;
         int floodVal = 0;
     };
