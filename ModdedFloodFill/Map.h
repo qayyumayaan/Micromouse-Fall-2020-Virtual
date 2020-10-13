@@ -63,9 +63,6 @@ private:
 
     // Fills the walls around the center once it is reached
     void centerWalls(short,short,char);
-
-    // Deletes the "internalMap" wall pointers
-    void deleteWalls();
 public:
     // Map object constructor which initializes the "internalMap"
     Map();

@@ -61,7 +61,6 @@ void Map::search(short mode) {
 
             if(API::wasReset()) {
                 cerr << "Resetting!" << endl;
-                deleteWalls();
                 return;
             }
 
@@ -97,7 +96,6 @@ void Map::search(short mode) {
 
             if(API::wasReset()) {
                 cerr << "Resetting!" << endl;
-                deleteWalls();
                 return;
             }
 
@@ -130,7 +128,6 @@ void Map::search(short mode) {
         if(pathStatus) {
             cerr << "Run complete!" << endl;
             cerr << "Speedrun achieved!" << endl;
-            deleteWalls();
             return;
         }
     }
@@ -166,7 +163,6 @@ void Map::search(short mode) {
 
         if(API::wasReset()) {
             cerr << "Resetting!" << endl;
-            deleteWalls();
             return;
         }
 
@@ -261,7 +257,6 @@ void Map::traverse() {
 
         if(API::wasReset()) {
             cerr << "Resetting!" << endl;
-            deleteWalls();
             return;
         }
 
@@ -293,7 +288,6 @@ void Map::traverse() {
 
     cerr << "Run complete!" << endl;
     cerr << "Speedrun achieved!" << endl;
-    deleteWalls();
 }
 
 void Map::wallCheck(short currX, short currY, char dir) {
@@ -727,17 +721,6 @@ char Map::turnMouse(char dir, short next) {
             return 's';
         default:
             return 'n';
-        }
-    }
-}
-
-void Map::deleteWalls() {
-    for(short i = 0; i < 16; i++) {
-        for(short j = 0; j < 16; j++) {
-            delete internalMap[i][j].westWall;
-            delete internalMap[i][j].eastWall;
-            delete internalMap[i][j].southWall;
-            delete internalMap[i][j].northWall;
         }
     }
 }
