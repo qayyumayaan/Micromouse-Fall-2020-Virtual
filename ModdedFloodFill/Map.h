@@ -17,10 +17,10 @@ private:
 
     //Struct for maze cells
     struct Cell {
-        bool *northWall = NULL;
-        bool *southWall = NULL;
-        bool *eastWall = NULL;
-        bool *westWall = NULL;
+        bool *northWall = 0;
+        bool *southWall = 0;
+        bool *eastWall = 0;
+        bool *westWall = 0;
         Coor coords;
         int floodVal = 0;
     };
@@ -29,10 +29,10 @@ private:
     Cell internalMap[16][16];
 
     // West/East walls
-    bool xWalls[17][16];
+    bool xWalls[17][16] = {{false}};
 
     // South/North walls
-    bool yWalls[16][17];
+    bool yWalls[16][17] = {{false}};
 
     // Stores latest path from the start to the center
     stack<Coor> solution;
