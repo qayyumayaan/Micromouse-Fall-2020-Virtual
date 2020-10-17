@@ -300,6 +300,90 @@ void Map::flooder(Cell curr) {
     }
 }
 
+// Function that returns a vector of all accessible neighboring cells' flood values
+// (-1 indicates neighbor is inaccessible)
+vector<int> Map::neighborCheck(Cell currCell) {
+    vector<int> neighbors = {-1,-1,-1,-1};
+    if(*currCell.westWall == false) {
+        neighbors[0] = internalMap[currCell.coords.x-1][currCell.coords.y].floodVal;
+    }
+    if(*currCell.eastWall == false) {
+        neighbors[1] = internalMap[currCell.coords.x+1][currCell.coords.y].floodVal;
+    }
+    if(*currCell.southWall == false) {
+        neighbors[2] = internalMap[currCell.coords.x][currCell.coords.y-1].floodVal;
+    }
+    if(*currCell.northWall == false) {
+        neighbors[3] = internalMap[currCell.coords.x][currCell.coords.y+1].floodVal;
+    }
+    return neighbors;
+}
+
+// Function to lowest flood value amongst the accessible neighbors
+short Map::findMin(vector<int> neighbors) {
+    short check = 0;
+    int min = -1;
+
+    while(check < 4) {
+        if(neighbors[check] == -1) {
+            check++;
+            continue;
+        }
+        if(min == -1) {
+            min = neighbors[check];
+            check++;
+            continue;
+        }
+        if(neighbors[check] < min) {
+            min = neighbors[check];
+        }
+        check++;
+    }
+    return min;
+}
+
+// Function to return the index of an accessible neighbor with the lowest flood value
+// (Preference is given to neighbors in the 'front' in case of multiple options)
+short Map::findMinIndex(vector<int> neighbors, char dir) {
+    short check = 0;
+    int min = -1;
+    short stepIndex = -1;
+
+    while(check < 4) {
+        if(neighbors[check] == -1) {
+            check++;
+            continue;
+        }
+        if(min == -1) {
+            min = neighbors[check];
+            stepIndex = check;
+            check++;
+            continue;
+        }
+        if(neighbors[check] == min) {
+            switch (dir) {
+            case 'w':
+                if(check == 0) stepIndex = check;
+                break;
+            case 'e':
+                if(check == 1) stepIndex = check;
+                break;
+            case 's':
+                if(check == 2) stepIndex = check;
+                break;
+            default:
+                if(check == 3) stepIndex = check;
+            }
+        }
+        if(neighbors[check] < min) {
+            min = neighbors[check];
+            stepIndex = check;
+        }
+        check++;
+    }
+    return stepIndex;
+}
+
 // Function to set center walls after reaching one of the center cells
 void Map::centerWalls(short currX, short currY, char dir) {
     switch (dir) {
@@ -487,90 +571,6 @@ void Map::centerWalls(short currX, short currY, char dir) {
             *internalMap[7][7].southWall = true;
         }
     }
-}
-
-// Function that returns a vector of all accessible neighboring cells' flood values
-// (-1 indicates neighbor is inaccessible)
-vector<int> Map::neighborCheck(Cell currCell) {
-    vector<int> neighbors = {-1,-1,-1,-1};
-    if(*currCell.westWall == false) {
-        neighbors[0] = internalMap[currCell.coords.x-1][currCell.coords.y].floodVal;
-    }
-    if(*currCell.eastWall == false) {
-        neighbors[1] = internalMap[currCell.coords.x+1][currCell.coords.y].floodVal;
-    }
-    if(*currCell.southWall == false) {
-        neighbors[2] = internalMap[currCell.coords.x][currCell.coords.y-1].floodVal;
-    }
-    if(*currCell.northWall == false) {
-        neighbors[3] = internalMap[currCell.coords.x][currCell.coords.y+1].floodVal;
-    }
-    return neighbors;
-}
-
-// Function to lowest flood value amongst the accessible neighbors
-short Map::findMin(vector<int> neighbors) {
-    short check = 0;
-    int min = -1;
-
-    while(check < 4) {
-        if(neighbors[check] == -1) {
-            check++;
-            continue;
-        }
-        if(min == -1) {
-            min = neighbors[check];
-            check++;
-            continue;
-        }
-        if(neighbors[check] < min) {
-            min = neighbors[check];
-        }
-        check++;
-    }
-    return min;
-}
-
-// Function to return the index of an accessible neighbor with the lowest flood value
-// (Preference is given to neighbors in the 'front' in case of multiple options)
-short Map::findMinIndex(vector<int> neighbors, char dir) {
-    short check = 0;
-    int min = -1;
-    short stepIndex = -1;
-
-    while(check < 4) {
-        if(neighbors[check] == -1) {
-            check++;
-            continue;
-        }
-        if(min == -1) {
-            min = neighbors[check];
-            stepIndex = check;
-            check++;
-            continue;
-        }
-        if(neighbors[check] == min) {
-            switch (dir) {
-            case 'w':
-                if(check == 0) stepIndex = check;
-                break;
-            case 'e':
-                if(check == 1) stepIndex = check;
-                break;
-            case 's':
-                if(check == 2) stepIndex = check;
-                break;
-            default:
-                if(check == 3) stepIndex = check;
-            }
-        }
-        if(neighbors[check] < min) {
-            min = neighbors[check];
-            stepIndex = check;
-        }
-        check++;
-    }
-    return stepIndex;
 }
 
 char Map::turnMouse(char dir, short next) {
