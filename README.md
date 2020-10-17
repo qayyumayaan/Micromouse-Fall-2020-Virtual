@@ -1,2 +1,4 @@
 # Micromouse-Fall-2020-Virtual
-Repo for the Virtual Micromouse Competition on Nov. 21, 2020, hosted by Princeton.
+Currently, only the Modified Floodfill Solver has been made.
+
+Will work on creating an A* Solver in the future.
