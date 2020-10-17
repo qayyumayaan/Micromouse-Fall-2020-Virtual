@@ -280,7 +280,7 @@ short Map::floodStep(Cell init, char dir) {
     return findMinIndex(neighborCheck(init),dir);
 }
 
-// Function for the modified floodfill algorithm
+// Function that 'floods' neighboring cells if needed
 void Map::flooder(Cell curr) {
     stack<Cell> flood;
     flood.push(curr);
