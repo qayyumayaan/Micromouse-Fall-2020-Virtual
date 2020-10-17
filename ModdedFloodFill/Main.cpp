@@ -13,5 +13,5 @@ int main(int argc, char* argv[]) {
     API::setColor(0, 0, 'G');
     API::setText(0, 0, "abc");
     Map maze;
-    maze.search(0);
+    maze.search(false);
 }

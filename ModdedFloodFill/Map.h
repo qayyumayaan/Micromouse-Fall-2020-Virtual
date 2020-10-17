@@ -68,7 +68,7 @@ public:
     Map();
 
     // Method to be called from the Main class, has 2 modes: 0 - Initial Search; 1 - Following Searches
-    void search(short);
+    void search(bool);
 
     // Utilizes the "solution" Cell stack to traverse to the center
     void traverse();

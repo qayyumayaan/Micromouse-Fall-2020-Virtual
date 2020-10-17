@@ -46,100 +46,73 @@ Map::Map() {
     cerr << "Maze values initialized!" << endl;
 }
 
-void Map::search(short mode) {
+void Map::search(bool centerCheck) {
 
     // Starting cell is on the bottom left of the maze at (0,0) with default direction being North
     short currX = 0;
     short currY = 0;
     char dir = 'n';
 
-    if(mode == 0) {
-        cerr << "Starting maze search!" << endl;
-        cerr << "Pathing to center..." << endl;
+    cerr << "Starting next run!" << endl;
+    cerr << "Pathing to center..." << endl;
 
-        while(internalMap[currX][currY].floodVal != 0) {
+    bool pathStatus = true; // This variable checks whether any flooding occurs in the run
 
-            if(API::wasReset()) {
-                cerr << "Resetting!" << endl;
-                return;
-            }
+    while(internalMap[currX][currY].floodVal != 0) {
 
-            wallCheck(currX,currY,dir);
-
-            short stepIndex = floodStep(internalMap[currX][currY],dir);
-
-            dir = turnMouse(dir,stepIndex);
-            switch (stepIndex) {
-            case 0:
-                currX--;
-                break;
-            case 1:
-                currX++;
-                break;
-            case 2:
-                currY--;
-                break;
-            default:
-                currY++;
-            }
-
-            cerr << "Moving to (" << currX << "," << currY << ")" << endl;
-            API::moveForward(1);
-        }
-    }
-    else {
-        cerr << "Starting next run!" << endl;
-        cerr << "Pathing to center..." << endl;
-
-        bool pathStatus = true;
-        while(internalMap[currX][currY].floodVal != 0) {
-
-            if(API::wasReset()) {
-                cerr << "Resetting!" << endl;
-                return;
-            }
-
-            wallCheck(currX,currY,dir);
-
-            int tempVal = internalMap[currX][currY].floodVal;
-
-            short stepIndex = floodStep(internalMap[currX][currY],dir);
-
-            if(tempVal != internalMap[currX][currY].floodVal) pathStatus = false;
-
-            dir = turnMouse(dir,stepIndex);
-            switch (stepIndex) {
-            case 0:
-                currX--;
-                break;
-            case 1:
-                currX++;
-                break;
-            case 2:
-                currY--;
-                break;
-            default:
-                currY++;
-            }
-
-            cerr << "Moving to (" << currX << "," << currY << ")" << endl;
-            API::moveForward(1);
-        }
-        if(pathStatus) {
-            cerr << "Run complete!" << endl;
-            cerr << "Speedrun achieved!" << endl;
+        if(API::wasReset()) {
+            cerr << "Resetting!" << endl;
             return;
         }
+
+        wallCheck(currX,currY,dir);
+
+        int tempVal = internalMap[currX][currY].floodVal;
+
+        short stepIndex = floodStep(internalMap[currX][currY],dir); // Stores neighbor to move toward after calling 'flooder'
+
+        if(tempVal != internalMap[currX][currY].floodVal) pathStatus = false;
+
+        dir = turnMouse(dir,stepIndex);
+        switch (stepIndex) {
+        case 0:
+            currX--;
+            break;
+        case 1:
+            currX++;
+            break;
+        case 2:
+            currY--;
+            break;
+        default:
+            currY++;
+        }
+
+        cerr << "Moving to (" << currX << "," << currY << ")" << endl;
+        API::moveForward(1);
     }
 
     cerr << "Center reached!" << endl;
+
+    // No need to continue run if no flooding occured on the path
+    if(pathStatus) {
+        cerr << "Run complete!" << endl;
+        cerr << "Speedrun achieved!" << endl;
+        return;
+    }
+
+    // If the center has not been previously reached, set its walls
+    if(!centerCheck) {
+        cerr << "Setting center walls!" << endl;
+        centerWalls(currX,currY,dir);
+        cerr << "Center walls set!" << endl;
+    }
+
+    // Stores the coordinates of the cell accessed at the center
     short finX = currX;
     short finY = currY;
 
-    cerr << "Setting center walls!" << endl;
-    centerWalls(currX,currY,dir);
-    cerr << "Center walls set!" << endl;
-
+    cerr << "Flipping cell values!" << endl;
     int maxVal = internalMap[0][0].floodVal;
     for(short i = 0; i < 16; i++) {
         for(short j = 0; j < 16; j++) {
@@ -155,10 +128,14 @@ void Map::search(short mode) {
             flooder(internalMap[i][j]);
         }
     }
+
+    // This stack stores the path to follow back to the center
+    // (Only followed back if it is continuous)
     solution = stack<Coor>();
     solution.push(internalMap[finX][finY].coords);
 
     cerr << "Pathing back to starting point..." << endl;
+
     while(internalMap[currX][currY].floodVal != 0) {
 
         if(API::wasReset()) {
@@ -185,6 +162,7 @@ void Map::search(short mode) {
             currY++;
         }
 
+        // This part is to take out any cells that the mouse backtracks from
         Coor temp = solution.top();
         solution.pop();
         if(solution.size() > 1) {
@@ -201,7 +179,8 @@ void Map::search(short mode) {
         cerr << "Moving to (" << currX << "," << currY << ")" << endl;
         API::moveForward(1);
     }
-    solution.pop();
+
+    solution.pop(); // Starting cell is popped because you're already on it lol
 
     cerr << "Returned to starting point!" << endl;
 
@@ -215,7 +194,6 @@ void Map::search(short mode) {
             API::setText(i,j,to_string(internalMap[i][j].floodVal));
         }
     }
-
     for(short i = 0; i < 16; i++) {
         for(short j = 0; j < 16; j++) {
             if(i == finX && j == finY) {
@@ -224,18 +202,21 @@ void Map::search(short mode) {
             flooder(internalMap[i][j]);
         }
     }
+
     dir = turnMouse(dir,3);
 
+    // Follow the 'solution' stack's path if it is continuous, otherwise search the maze again
     if(solutionCheck(solution)) {
         cerr << "Maze mapping complete!" << endl;
         traverse();
     }
     else {
         cerr << "Retracing maze..." << endl;
-        search(1);
+        search(true);
     }
 }
 
+// Function to check if the path back to the center is continuous
 bool Map::solutionCheck(stack<Coor> trace) {
     while(trace.size() > 1) {
         int valCheck = internalMap[trace.top().x][trace.top().y].floodVal;
@@ -245,6 +226,7 @@ bool Map::solutionCheck(stack<Coor> trace) {
     return true;
 }
 
+// Function to traverse maze according to the 'solution' stack
 void Map::traverse() {
 
     cerr << "Starting next run!" << endl;
@@ -290,83 +272,7 @@ void Map::traverse() {
     cerr << "Speedrun achieved!" << endl;
 }
 
-void Map::wallCheck(short currX, short currY, char dir) {
-    char front,left,right = ' ';
-
-    switch (dir) {
-    case 'n':
-        front = 'n';
-        left = 'w';
-        right = 'e';
-        break;
-    case 's':
-        front = 's';
-        left = 'e';
-        right = 'w';
-        break;
-    case 'w':
-        front = 'w';
-        left = 's';
-        right = 'n';
-        break;
-    default:
-        front = 'e';
-        left = 'n';
-        right = 's';
-    }
-
-    if(API::wallFront()) {
-        API::setWall(currX,currY,front);
-        switch (front) {
-        case 'w':
-            *internalMap[currX][currY].westWall = true;
-            break;
-        case 'e':
-            *internalMap[currX][currY].eastWall = true;
-            break;
-        case 's':
-            *internalMap[currX][currY].southWall = true;
-            break;
-        default:
-            *internalMap[currX][currY].northWall = true;
-        }
-    }
-
-    if(API::wallLeft()) {
-        API::setWall(currX,currY,left);
-        switch (left) {
-        case 'w':
-            *internalMap[currX][currY].westWall = true;
-            break;
-        case 'e':
-            *internalMap[currX][currY].eastWall = true;
-            break;
-        case 's':
-            *internalMap[currX][currY].southWall = true;
-            break;
-        default:
-            *internalMap[currX][currY].northWall = true;
-        }
-    }
-
-    if(API::wallRight()) {
-        API::setWall(currX,currY,right);
-        switch (right) {
-        case 'w':
-            *internalMap[currX][currY].westWall = true;
-            break;
-        case 'e':
-            *internalMap[currX][currY].eastWall = true;
-            break;
-        case 's':
-            *internalMap[currX][currY].southWall = true;
-            break;
-        default:
-            *internalMap[currX][currY].northWall = true;
-        }
-    }
-}
-
+// Function which returns minimum index after 'flooder' is called
 short Map::floodStep(Cell init, char dir) {
 
     flooder(init);
@@ -374,6 +280,7 @@ short Map::floodStep(Cell init, char dir) {
     return findMinIndex(neighborCheck(init),dir);
 }
 
+// Function for the modified floodfill algorithm
 void Map::flooder(Cell curr) {
     stack<Cell> flood;
     flood.push(curr);
@@ -393,6 +300,7 @@ void Map::flooder(Cell curr) {
     }
 }
 
+// Function to set center walls after reaching one of the center cells
 void Map::centerWalls(short currX, short currY, char dir) {
     switch (dir) {
     case 'w':
@@ -581,6 +489,8 @@ void Map::centerWalls(short currX, short currY, char dir) {
     }
 }
 
+// Function that returns a vector of all accessible neighboring cells' flood values
+// (-1 indicates neighbor is inaccessible)
 vector<int> Map::neighborCheck(Cell currCell) {
     vector<int> neighbors = {-1,-1,-1,-1};
     if(*currCell.westWall == false) {
@@ -598,6 +508,7 @@ vector<int> Map::neighborCheck(Cell currCell) {
     return neighbors;
 }
 
+// Function to lowest flood value amongst the accessible neighbors
 short Map::findMin(vector<int> neighbors) {
     short check = 0;
     int min = -1;
@@ -620,6 +531,8 @@ short Map::findMin(vector<int> neighbors) {
     return min;
 }
 
+// Function to return the index of an accessible neighbor with the lowest flood value
+// (Preference is given to neighbors in the 'front' in case of multiple options)
 short Map::findMinIndex(vector<int> neighbors, char dir) {
     short check = 0;
     int min = -1;
@@ -721,6 +634,83 @@ char Map::turnMouse(char dir, short next) {
             return 's';
         default:
             return 'n';
+        }
+    }
+}
+
+void Map::wallCheck(short currX, short currY, char dir) {
+    char front,left,right = ' ';
+
+    switch (dir) {
+    case 'n':
+        front = 'n';
+        left = 'w';
+        right = 'e';
+        break;
+    case 's':
+        front = 's';
+        left = 'e';
+        right = 'w';
+        break;
+    case 'w':
+        front = 'w';
+        left = 's';
+        right = 'n';
+        break;
+    default:
+        front = 'e';
+        left = 'n';
+        right = 's';
+    }
+
+    if(API::wallFront()) {
+        API::setWall(currX,currY,front);
+        switch (front) {
+        case 'w':
+            *internalMap[currX][currY].westWall = true;
+            break;
+        case 'e':
+            *internalMap[currX][currY].eastWall = true;
+            break;
+        case 's':
+            *internalMap[currX][currY].southWall = true;
+            break;
+        default:
+            *internalMap[currX][currY].northWall = true;
+        }
+    }
+
+    if(API::wallLeft()) {
+        API::setWall(currX,currY,left);
+        switch (left) {
+        case 'w':
+            *internalMap[currX][currY].westWall = true;
+            break;
+        case 'e':
+            *internalMap[currX][currY].eastWall = true;
+            break;
+        case 's':
+            *internalMap[currX][currY].southWall = true;
+            break;
+        default:
+            *internalMap[currX][currY].northWall = true;
+        }
+    }
+
+    if(API::wallRight()) {
+        API::setWall(currX,currY,right);
+        switch (right) {
+        case 'w':
+            *internalMap[currX][currY].westWall = true;
+            break;
+        case 'e':
+            *internalMap[currX][currY].eastWall = true;
+            break;
+        case 's':
+            *internalMap[currX][currY].southWall = true;
+            break;
+        default:
+            *internalMap[currX][currY].northWall = true;
         }
     }
 }
