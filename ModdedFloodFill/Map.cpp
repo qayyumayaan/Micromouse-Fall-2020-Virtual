@@ -53,7 +53,8 @@ void Map::search(bool centerCheck) {
     short currY = 0;
     char dir = 'n';
 
-    cerr << "Starting next run!" << endl;
+    if(centerCheck) cerr << "Starting next run!" << endl;
+    else cerr << "Starting maze search!" << endl;
     cerr << "Pathing to center..." << endl;
 
     bool pathStatus = true; // This variable checks whether any flooding occurs in the run
