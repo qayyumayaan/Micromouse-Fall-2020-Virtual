@@ -59,6 +59,9 @@ void Map::search(bool centerCheck) {
 
     bool pathStatus = true; // This variable checks whether any flooding occurs in the run
 
+    int currTurns = 0;
+    int currDist = 0;
+
     while(internalMap[currX][currY].floodVal != 0) {
 
         if(API::wasReset()) {
@@ -68,29 +71,75 @@ void Map::search(bool centerCheck) {
 
         wallCheck(currX,currY,dir);
 
+        internalMap[currX][currY].visited = true;
+
         int tempVal = internalMap[currX][currY].floodVal;
 
         short stepIndex = floodStep(internalMap[currX][currY],dir); // Stores neighbor to move toward after calling 'flooder'
 
         if(tempVal != internalMap[currX][currY].floodVal) pathStatus = false;
 
+        char prevDir = dir;
         dir = turnMouse(dir,stepIndex);
-        switch (stepIndex) {
-        case 0:
-            currX--;
+        short moveDist = 0;
+
+        switch (dir) {
+        case 'w':
+            if (prevDir == 'e') {
+                currTurns+=2;
+            }
+            else if (prevDir == 'n' || prevDir == 's') {
+                currTurns++;
+            }
+            moveDist = lookAhead(currX-1,currY,dir);
+            currX-=moveDist;
             break;
-        case 1:
-            currX++;
+        case 'e':
+            if (prevDir == 'w') {
+                currTurns+=2;
+            }
+            else if (prevDir == 'n' || prevDir == 's') {
+                currTurns++;
+            }
+            moveDist = lookAhead(currX+1,currY,dir);
+            currX+=moveDist;
             break;
-        case 2:
-            currY--;
+        case 's':
+            if (prevDir == 'n') {
+                currTurns+=2;
+            }
+            else if (prevDir == 'w' || prevDir == 'e') {
+                currTurns++;
+            }
+            moveDist = lookAhead(currX,currY-1,dir);
+            currY-=moveDist;
             break;
         default:
-            currY++;
+            if (prevDir == 's') {
+                currTurns+=2;
+            }
+            else if (prevDir == 'w' || prevDir == 'e') {
+                currTurns++;
+            }
+            moveDist = lookAhead(currX,currY+1,dir);
+            currY+=moveDist;
         }
 
         cerr << "Moving to (" << currX << "," << currY << ")" << endl;
-        API::moveForward(1);
+        API::moveForward(moveDist);
+        totalDist++;
+        currDist++;
+    }
+
+    if (bestDist == 0) {
+        bestDist = currDist;
+        bestTurns = currTurns;
+    }
+    if (currDist < bestDist) {
+        bestDist = currDist;
+    }
+    if (currTurns < bestTurns) {
+        bestTurns = currTurns;
     }
 
     cerr << "Center reached!" << endl;
@@ -130,6 +179,26 @@ void Map::search(bool centerCheck) {
         }
     }
 
+    double currentScore = bestDist + bestTurns + 0.1*(totalDist + totalTurns);
+
+    double unoptimalRatio = (totalTurns*1.0)/totalDist;
+    double optimalRatio = (currTurns*1.0)/currDist;
+
+    int estimateBestDist = internalMap[currX][currY].floodVal;
+    double unoptimalTurns = estimateBestDist*unoptimalRatio;
+    double optimalTurns = estimateBestDist*optimalRatio;
+
+    double estimateTotal = currDist + currTurns + 6*(estimateBestDist + unoptimalTurns);
+    double estimateBestScore = estimateBestDist + optimalTurns + 0.1*(estimateTotal);
+
+    cerr << (unoptimalRatio) << endl;
+    cerr << (estimateBestScore/currentScore) << endl;
+
+    if ((estimateBestScore/currentScore) > 0.9) {
+        cerr << "Estimated future score is unoptimal!" << endl;
+        return;
+    }
+
     // This stack stores the path to follow back to the center
     // (Only followed back if it is continuous)
     solution = stack<Coor>();
@@ -146,39 +215,59 @@ void Map::search(bool centerCheck) {
 
         wallCheck(currX,currY,dir);
 
+        internalMap[currX][currY].visited = true;
+
         short stepIndex = floodStep(internalMap[currX][currY],dir);
 
         dir = turnMouse(dir,stepIndex);
+        short moveDist = 0;
+        short checkX = currX; short checkY = currY;
+
         switch (stepIndex) {
         case 0:
-            currX--;
+            moveDist = lookAhead(currX-1,currY,dir);
+            currX-=moveDist;
+            checkX--;
             break;
         case 1:
-            currX++;
+            moveDist = lookAhead(currX+1,currY,dir);
+            currX+=moveDist;
+            checkX++;
             break;
         case 2:
-            currY--;
+            moveDist = lookAhead(currX,currY-1,dir);
+            currY-=moveDist;
+            checkY--;
             break;
         default:
-            currY++;
+            moveDist = lookAhead(currX,currY+1,dir);
+            currY+=moveDist;
+            checkY++;
         }
+
+        cerr << moveDist << endl;
 
         // This part is to take out any cells that the mouse backtracks from
         Coor temp = solution.top();
         solution.pop();
         if(solution.size() > 1) {
-            if(solution.top().x != currX || solution.top().y != currY) {
+            if(solution.top().x != checkX || solution.top().y != checkY) {
                 solution.push(temp);
                 solution.push(internalMap[currX][currY].coords);
+            }
+            else {
+                for(int i = 0; i < moveDist-1; i++) {
+                    solution.pop();
+                }
             }
         }
         else {
             solution.push(temp);
             solution.push(internalMap[currX][currY].coords);
         }
-
         cerr << "Moving to (" << currX << "," << currY << ")" << endl;
-        API::moveForward(1);
+        API::moveForward(moveDist);
+        totalDist+=moveDist;
     }
 
     solution.pop(); // Starting cell is popped because you're already on it lol
@@ -187,11 +276,9 @@ void Map::search(bool centerCheck) {
 
     cerr << "Flipping cell values!" << endl;
     maxVal = internalMap[finX][finY].floodVal;
-    vector<vector<int>> mapCheck(16,vector<int>(16));
     for(int i = 0; i < 16; i++) {
         for(int j = 0; j < 16; j++) {
             internalMap[i][j].floodVal = abs(maxVal - internalMap[i][j].floodVal);
-            mapCheck[i][j] = internalMap[i][j].floodVal;
             API::setText(i,j,to_string(internalMap[i][j].floodVal));
         }
     }
@@ -217,12 +304,75 @@ void Map::search(bool centerCheck) {
     }
 }
 
+// Function for moving forward multiple cells at a time across previously visted cells
+short Map::lookAhead(short currX, short currY, char dir) {
+    short dist = 1;
+
+    while(true) {
+        if(internalMap[currX][currY].visited != true) return dist;
+        cerr << "("<<currX << "," << currY << ") has been visited" << endl;
+        switch (dir) {
+        case 'w':
+            if(*internalMap[currX][currY].westWall == false && currX > 0) {
+                if(internalMap[currX][currY].floodVal > internalMap[currX-1][currY].floodVal) {
+                    dist++;
+                    currX--;
+                    break;
+                }
+                return dist;
+            }
+            return dist;
+        case 'e':
+            if(*internalMap[currX][currY].eastWall == false && currX < 15) {
+                if(internalMap[currX][currY].floodVal > internalMap[currX+1][currY].floodVal) {
+                    dist++;
+                    currX++;
+                    break;
+                }
+                return dist;
+            }
+            return dist;
+        case 's':
+            if(*internalMap[currX][currY].southWall == false && currY > 0) {
+                if(internalMap[currX][currY].floodVal > internalMap[currX][currY-1].floodVal) {
+                    dist++;
+                    currY--;
+                    break;
+                }
+                return dist;
+            }
+            return dist;
+        default:
+            if(*internalMap[currX][currY].northWall == false && currY < 15) {
+                if(internalMap[currX][currY].floodVal > internalMap[currX][currY+1].floodVal) {
+                    dist++;
+                    currY++;
+                    break;
+                }
+                return dist;
+            }
+            return dist;
+        }
+    }
+}
+
 // Function to check if the path back to the center is continuous
 bool Map::solutionCheck(stack<Coor> trace) {
     while(trace.size() > 1) {
-        int valCheck = internalMap[trace.top().x][trace.top().y].floodVal;
+        short tempX = trace.top().x; short tempY = trace.top().y;
         trace.pop();
-        if(valCheck != internalMap[trace.top().x][trace.top().y].floodVal+1) return false;
+        if(tempX > trace.top().x) {
+            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(tempX - trace.top().x)) return false;
+        }
+        else if(tempX < trace.top().x) {
+            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(trace.top().x - tempX)) return false;
+        }
+        else if(tempY > trace.top().y) {
+            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(tempY - trace.top().y)) return false;
+        }
+        else {
+            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(trace.top().y - tempY)) return false;
+        }
     }
     return true;
 }
@@ -244,29 +394,75 @@ void Map::traverse() {
         }
 
         short stepIndex;
-        if(currX > solution.top().x) stepIndex = 0;
-        else if(currX < solution.top().x) stepIndex = 1;
-        else if(currY > solution.top().y) stepIndex = 2;
-        else {stepIndex = 3;}
+        short moveDist = 0;
+        Coor temp = solution.top();
         solution.pop();
+        if(currX > temp.x) {
+            stepIndex = 0;
+            if(!solution.empty()) {
+                while (temp.x > solution.top().x) {
+                    temp = solution.top();
+                    solution.pop();
+                    if(solution.empty()) break;
+                }
+            }
+            moveDist = currX - temp.x;
+        }
+        else if(currX < temp.x) {
+            stepIndex = 1;
+            if(!solution.empty()) {
+                while (temp.x < solution.top().x) {
+                    temp = solution.top();
+                    solution.pop();
+                    if(solution.empty()) break;
+                }
+            }
+            moveDist = temp.x - currX;
+        }
+        else if(currY > temp.y) {
+            stepIndex = 2;
+            if(!solution.empty()) {
+                while (temp.y > solution.top().y) {
+                    temp = solution.top();
+                    solution.pop();
+                    if(solution.empty()) break;
+                }
+            }
+            moveDist = currY - temp.y;
+        }
+        else {
+            stepIndex = 3;
+            if(!solution.empty()) {
+                while (temp.y < solution.top().y) {
+                    temp = solution.top();
+                    solution.pop();
+                    if(solution.empty()) break;
+                }
+            }
+            moveDist = temp.y - currY;
+        }
+
+        cerr << moveDist << endl;
 
         dir = turnMouse(dir,stepIndex);
+
         switch (stepIndex) {
         case 0:
-            currX--;
+            currX-=moveDist;
             break;
         case 1:
-            currX++;
+            currX+=moveDist;
             break;
         case 2:
-            currY--;
+            currY-=moveDist;
             break;
         default:
-            currY++;
+            currY+=moveDist;
         }
 
         cerr << "Moving to (" << currX << "," << currY << ")" << endl;
-        API::moveForward(1);
+        API::moveForward(moveDist);
+        totalDist++;
     }
 
     cerr << "Run complete!" << endl;
@@ -583,12 +779,15 @@ char Map::turnMouse(char dir, short next) {
         case 1:
             API::turnRight();
             API::turnRight();
+            totalTurns+=2;
             return 'e';
         case 2:
             API::turnLeft();
+            totalTurns++;
             return 's';
         default:
             API::turnRight();
+            totalTurns++;
             return 'n';
         }
     case 'e':
@@ -596,42 +795,51 @@ char Map::turnMouse(char dir, short next) {
         case 0:
             API::turnRight();
             API::turnRight();
+            totalTurns+=2;
             return 'w';
         case 1:
             return 'e';
         case 2:
             API::turnRight();
+            totalTurns++;
             return 's';
         default:
             API::turnLeft();
+            totalTurns++;
             return 'n';
         }
     case 's':
         switch (next) {
         case 0:
             API::turnRight();
+            totalTurns++;
             return 'w';
         case 1:
             API::turnLeft();
+            totalTurns++;
             return 'e';
         case 2:
             return 's';
         default:
             API::turnRight();
             API::turnRight();
+            totalTurns+=2;
             return 'n';
         }
     default:
         switch (next) {
         case 0:
             API::turnLeft();
+            totalTurns++;
             return 'w';
         case 1:
             API::turnRight();
+            totalTurns++;
             return 'e';
         case 2:
             API::turnRight();
             API::turnRight();
+            totalTurns+=2;
             return 's';
         default:
             return 'n';
