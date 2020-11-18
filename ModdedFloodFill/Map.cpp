@@ -245,8 +245,6 @@ void Map::search(bool centerCheck) {
             checkY++;
         }
 
-        cerr << moveDist << endl;
-
         // This part is to take out any cells that the mouse backtracks from
         Coor temp = solution.top();
         solution.pop();
@@ -310,7 +308,7 @@ short Map::lookAhead(short currX, short currY, char dir) {
 
     while(true) {
         if(internalMap[currX][currY].visited != true) return dist;
-        cerr << "("<<currX << "," << currY << ") has been visited" << endl;
+
         switch (dir) {
         case 'w':
             if(*internalMap[currX][currY].westWall == false && currX > 0) {
@@ -441,8 +439,6 @@ void Map::traverse() {
             }
             moveDist = temp.y - currY;
         }
-
-        cerr << moveDist << endl;
 
         dir = turnMouse(dir,stepIndex);
 
