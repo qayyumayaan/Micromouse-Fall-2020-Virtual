@@ -35,23 +35,29 @@ private:
     // South/North walls
     bool yWalls[16][17] = {{false}};
 
+    // Maze cell discovered count
+    int cellVisitCount = 0;
+
     // Total turns
     int totalTurns = 0;
 
     // Total distance
-    int totalDist = 0;
+    double totalDist = 0;
 
     // Best turns
     int bestTurns = 0;
 
     // Best distance
-    int bestDist = 0;
+    double bestDist = 0;
 
     // Stores latest path from the start to the center
     stack<Coor> solution;
 
     // Function for moving forward multiple cells at a time across previously visted cells
     short lookAhead(short,short,char);
+
+    // Function to check whether path back to start has already been traversed over, returns resulting score if path has been traversed over and -1 otherwise
+    int futurePathCheck(short,short,char);
 
     // Checks the solution stack for 'flood' value consistency
     bool solutionCheck(stack<Coor>);

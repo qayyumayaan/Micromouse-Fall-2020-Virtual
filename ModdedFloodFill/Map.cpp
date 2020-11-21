@@ -60,7 +60,7 @@ void Map::search(bool centerCheck) {
     bool pathStatus = true; // This variable checks whether any flooding occurs in the run
 
     int currTurns = 0;
-    int currDist = 0;
+    double currDist = 0;
 
     while(internalMap[currX][currY].floodVal != 0) {
 
@@ -69,9 +69,12 @@ void Map::search(bool centerCheck) {
             return;
         }
 
-        wallCheck(currX,currY,dir);
+        if(!internalMap[currX][currY].visited) {
+            cellVisitCount++;
+            internalMap[currX][currY].visited = true;
+        }
 
-        internalMap[currX][currY].visited = true;
+        wallCheck(currX,currY,dir);
 
         int tempVal = internalMap[currX][currY].floodVal;
 
@@ -127,19 +130,14 @@ void Map::search(bool centerCheck) {
 
         cerr << "Moving to (" << currX << "," << currY << ")" << endl;
         API::moveForward(moveDist);
-        totalDist++;
-        currDist++;
-    }
-
-    if (bestDist == 0) {
-        bestDist = currDist;
-        bestTurns = currTurns;
-    }
-    if (currDist < bestDist) {
-        bestDist = currDist;
-    }
-    if (currTurns < bestTurns) {
-        bestTurns = currTurns;
+        if(moveDist > 2) {
+            totalDist+=(2+(moveDist-2)*0.5);
+            currDist+=(2+(moveDist-2)*0.5);
+        }
+        else {
+            totalDist+=moveDist;
+            currDist+=moveDist;
+        }
     }
 
     cerr << "Center reached!" << endl;
@@ -179,23 +177,51 @@ void Map::search(bool centerCheck) {
         }
     }
 
+    if (bestDist == 0) {
+        bestDist = currDist;
+        bestTurns = currTurns;
+    }
+    if (currDist < bestDist) {
+        bestDist = currDist;
+    }
+    if (currTurns < bestTurns) {
+        bestTurns = currTurns;
+    }
+
     double currentScore = bestDist + bestTurns + 0.1*(totalDist + totalTurns);
 
-    double unoptimalRatio = (totalTurns*1.0)/totalDist;
-    double optimalRatio = (currTurns*1.0)/currDist;
+    int futurePath = futurePathCheck(currX,currY,dir);
 
-    int estimateBestDist = internalMap[currX][currY].floodVal;
-    double unoptimalTurns = estimateBestDist*unoptimalRatio;
-    double optimalTurns = estimateBestDist*optimalRatio;
+    if(futurePath == -1) {
+        double unoptimalRatio = (totalTurns*1.0)/totalDist;
+        double optimalRatio = (currTurns*1.0)/currDist;
 
-    double estimateTotal = currDist + currTurns + 6*(estimateBestDist + unoptimalTurns);
-    double estimateBestScore = estimateBestDist + optimalTurns + 0.1*(estimateTotal);
+        int estimateBestDist = internalMap[currX][currY].floodVal;
+        double unoptimalTurns = estimateBestDist*unoptimalRatio;
+        double optimalTurns = estimateBestDist*optimalRatio;
 
-    cerr << (unoptimalRatio) << endl;
-    cerr << (estimateBestScore/currentScore) << endl;
+        double estimateTotal = currDist + currTurns + 6*(estimateBestDist + unoptimalTurns);
+        double estimateBestScore = estimateBestDist + optimalTurns + 0.1*(estimateTotal);
 
-    if ((estimateBestScore/currentScore) > 0.9) {
-        cerr << "Estimated future score is unoptimal!" << endl;
+        if(cellVisitCount < 77) {
+            if ((estimateBestScore/currentScore) > 0.4) {
+                cerr << "Estimated future score is unoptimal!" << endl;
+                cerr << "Run complete!" << endl;
+                return;
+            }
+        }
+        else {
+            if ((estimateBestScore/currentScore) > 0.9) {
+                cerr << "Estimated future score is unoptimal!" << endl;
+                cerr << "Run complete!" << endl;
+                return;
+            }
+        }
+    }
+
+    if(futurePath >= currentScore) {
+        cerr << "Future score is unoptimal!" << endl;
+        cerr << "Run complete!" << endl;
         return;
     }
 
@@ -213,9 +239,12 @@ void Map::search(bool centerCheck) {
             return;
         }
 
-        wallCheck(currX,currY,dir);
+        if(!internalMap[currX][currY].visited) {
+            cellVisitCount++;
+            internalMap[currX][currY].visited = true;
+        }
 
-        internalMap[currX][currY].visited = true;
+        wallCheck(currX,currY,dir);
 
         short stepIndex = floodStep(internalMap[currX][currY],dir);
 
@@ -265,7 +294,12 @@ void Map::search(bool centerCheck) {
         }
         cerr << "Moving to (" << currX << "," << currY << ")" << endl;
         API::moveForward(moveDist);
-        totalDist+=moveDist;
+        if(moveDist > 2) {
+            totalDist+=(2+(moveDist-2)*0.5);
+        }
+        else {
+            totalDist+=moveDist;
+        }
     }
 
     solution.pop(); // Starting cell is popped because you're already on it lol
@@ -352,6 +386,119 @@ short Map::lookAhead(short currX, short currY, char dir) {
             return dist;
         }
     }
+}
+
+// Function to check whether path back to start has already been traversed over, returns resulting score if path has been traversed over and -1 otherwise
+int Map::futurePathCheck(short currX, short currY, char dir) {
+    int futureTotalTurns = totalTurns;
+    double futureTotalDist = totalDist;
+
+    int futureCurrTurns = 0;
+    double futureCurrDist = 0;
+
+    while(currX != 0 || currY != 0) {
+        if(!internalMap[currX][currY].visited) return -1;
+
+        short stepIndex = findMinIndex(neighborCheck(internalMap[currX][currY]),dir);
+        short moveDist = 0;
+
+        switch (stepIndex) {
+        case 0:
+            switch (dir) {
+            case 'w':
+                break;
+            case 'e':
+                futureCurrTurns+=2;
+                futureTotalTurns+=2;
+                break;
+            case 's':
+                futureCurrTurns++;
+                futureTotalTurns++;
+                break;
+            default:
+                futureCurrTurns++;
+                futureTotalTurns++;
+            }
+            dir = 'w';
+            moveDist = lookAhead(currX-1,currY,dir);
+            currX-=moveDist;
+            break;
+        case 1:
+            switch (dir) {
+            case 'w':
+                futureCurrTurns+=2;
+                futureTotalTurns+=2;
+                break;
+            case 'e':
+                break;
+            case 's':
+                futureCurrTurns++;
+                futureTotalTurns++;
+                break;
+            default:
+                futureCurrTurns++;
+                futureTotalTurns++;
+            }
+            dir = 'e';
+            moveDist = lookAhead(currX+1,currY,dir);
+            currX+=moveDist;
+            break;
+        case 2:
+            switch (dir) {
+            case 'w':
+                futureCurrTurns++;
+                futureTotalTurns++;
+                break;
+            case 'e':
+                futureCurrTurns++;
+                futureTotalTurns++;
+            case 's':
+                futureCurrTurns++;
+                futureTotalTurns++;
+                break;
+            default:
+                futureCurrTurns+=2;
+                futureTotalTurns+=2;
+            }
+            dir = 's';
+            moveDist = lookAhead(currX,currY-1,dir);
+            currY-=moveDist;
+            break;
+        default:
+            switch (dir) {
+            case 'w':
+                futureCurrTurns++;
+                futureTotalTurns++;
+                break;
+            case 'e':
+                futureCurrTurns++;
+                futureTotalTurns++;
+                break;
+            case 's':
+                futureCurrTurns+=2;
+                futureTotalTurns+=2;
+                break;
+            default:
+                break;
+            }
+            dir = 'n';
+            moveDist = lookAhead(currX,currY+1,dir);
+            currY+=moveDist;
+        }
+
+        if(moveDist > 2) {
+            futureTotalDist+=(2+(moveDist-2)*0.5);
+            futureCurrDist+=(2+(moveDist-2)*0.5);
+        }
+        else {
+            futureTotalDist+=moveDist;
+            futureCurrDist+=moveDist;
+        }
+    }
+
+    double futureScore = futureCurrDist + futureCurrTurns + 0.1*(futureTotalDist + futureTotalTurns + 2);
+
+    return futureScore;
 }
 
 // Function to check if the path back to the center is continuous
