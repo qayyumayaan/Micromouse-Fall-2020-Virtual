@@ -14,5 +14,5 @@ int main(int argc, char* argv[]) {
     API::setText(0, 0, "abc");
     Map maze;
     maze.dfs();
-    maze.astar();
+//    maze.astar();
 }

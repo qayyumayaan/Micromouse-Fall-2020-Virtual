@@ -18,7 +18,6 @@ private:
     //Struct for maze cells
     struct Cell {
         bool visited = false;
-        vector<Coor> adj;
         bool *northWall = 0;
         bool *southWall = 0;
         bool *eastWall = 0;
@@ -26,6 +25,8 @@ private:
         Coor coords;
         int floodVal = 0;
     };
+
+    char Direction = 'n';
 
     // Personal maze map to keep track of
     Cell internalMap[16][16];
@@ -53,6 +54,9 @@ private:
 
     // Turns the mouse towards the desired direction (0 - West, 1 - East, 2 - South, 3 - North)
     char turnMouse(char,short);
+
+    //DFS
+    void dfsHelper(short, short);
 
 public:
     // Map object constructor which initializes the "internalMap"

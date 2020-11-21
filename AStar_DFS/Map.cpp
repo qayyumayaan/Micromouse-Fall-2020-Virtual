@@ -49,11 +49,64 @@ Map::Map() {
 // Input code for DFS in this method
 void Map::dfs() {
     internalMap[0][0].visited = true;
-    wallCheck(0,0,'n');
+    dfsHelper(0,0);
+    cerr << "DFS Complete" << endl;
 }
 
 // Input code for A* in this method
 void Map::astar() {
+
+}
+void Map::dfsHelper(short x, short y){
+    internalMap[x][y].visited = true;
+
+
+    wallCheck(x,y,Direction);
+    if (!*internalMap[x][y].northWall){
+        if(!internalMap[x][y+1].visited){
+            Direction = turnMouse(Direction,3);
+            API::moveForward();
+            cerr << "Moving to: (" << x << "," << y+1 << ")" << endl;
+            dfsHelper(x,y+1);
+            Direction = turnMouse(Direction, 2);
+            API::moveForward();
+            cerr << "Moving to: (" << x << "," << y << ")" << endl;
+        }
+    }
+    if (!*internalMap[x][y].southWall){
+        if(!internalMap[x][y-1].visited){
+            Direction = turnMouse(Direction,2);
+            API::moveForward();
+            cerr << "Moving to: (" << x << "," << y-1 << ")" << endl;
+            dfsHelper(x,y-1);
+            Direction = turnMouse(Direction, 3);
+            API::moveForward();
+            cerr << "Moving to: (" << x << "," << y << ")" << endl;
+        }
+    }
+    if (!*internalMap[x][y].eastWall){
+        if(!internalMap[x+1][y].visited){
+            Direction = turnMouse(Direction,1);
+            API::moveForward();
+            cerr << "Moving to: (" << x+1 << "," << y << ")" << endl;
+            dfsHelper(x+1,y);
+            Direction = turnMouse(Direction, 0);
+            API::moveForward();
+            cerr << "Moving to: (" << x << "," << y << ")" << endl;
+        }
+    }
+    if (!*internalMap[x][y].westWall){
+        if(!internalMap[x-1][y].visited){
+            Direction = turnMouse(Direction,0);
+            API::moveForward();
+            cerr << "Moving to: (" << x-1 << "," << y << ")" << endl;
+            dfsHelper(x-1,y);
+            Direction = turnMouse(Direction, 1);
+            API::moveForward();
+            cerr << "Moving to: (" << x << "," << y << ")" << endl;
+        }
+    }
+
 
 }
 
