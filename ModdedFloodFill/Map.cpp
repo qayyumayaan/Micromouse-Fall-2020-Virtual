@@ -661,26 +661,22 @@ vector<int> Map::neighborCheck(Cell currCell) {
 
 // Function to lowest flood value amongst the accessible neighbors
 short Map::findMin(vector<int> neighbors) {
-    short check = 0;
-    int min = -1;
+    int min = INT_MAX; // Initialize with the maximum possible value
 
-    while(check < 4) {
-        if(neighbors[check] == -1) {
-            check++;
-            continue;
+    for (int val : neighbors) {
+        if (val != -1 && val < min) {
+            min = val;
         }
-        if(min == -1) {
-            min = neighbors[check];
-            check++;
-            continue;
-        }
-        if(neighbors[check] < min) {
-            min = neighbors[check];
-        }
-        check++;
     }
+
+    // If all neighbors are inaccessible, return -1
+    if (min == INT_MAX) {
+        return -1;
+    }
+
     return min;
 }
+
 
 // Function to return the index of an accessible neighbor with the lowest flood value
 // (Preference is given to neighbors in the 'front' in case of multiple options)
