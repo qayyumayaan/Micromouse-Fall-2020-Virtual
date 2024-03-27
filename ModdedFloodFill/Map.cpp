@@ -991,78 +991,29 @@ char Map::turnMouse(char dir, short next) {
 }
 
 void Map::wallCheck(short currX, short currY, char dir) {
-    char front,left,right = ' ';
-
+    char front, left, right;
+    
     switch (dir) {
-    case 'n':
-        front = 'n';
-        left = 'w';
-        right = 'e';
-        break;
-    case 's':
-        front = 's';
-        left = 'e';
-        right = 'w';
-        break;
-    case 'w':
-        front = 'w';
-        left = 's';
-        right = 'n';
-        break;
-    default:
-        front = 'e';
-        left = 'n';
-        right = 's';
+        case 'n': front = 'n'; left = 'w'; right = 'e'; break;
+        case 's': front = 's'; left = 'e'; right = 'w'; break;
+        case 'w': front = 'w'; left = 's'; right = 'n'; break;
+        default: front = 'e'; left = 'n'; right = 's';
     }
 
-    if(API::wallFront()) {
-        API::setWall(currX,currY,front);
-        switch (front) {
-        case 'w':
-            *internalMap[currX][currY].westWall = true;
-            break;
-        case 'e':
-            *internalMap[currX][currY].eastWall = true;
-            break;
-        case 's':
-            *internalMap[currX][currY].southWall = true;
-            break;
-        default:
-            *internalMap[currX][currY].northWall = true;
-        }
-    }
+    setWallIf(API::wallFront(), currX, currY, front);
+    setWallIf(API::wallLeft(), currX, currY, left);
+    setWallIf(API::wallRight(), currX, currY, right);
+}
 
-    if(API::wallLeft()) {
-        API::setWall(currX,currY,left);
-        switch (left) {
-        case 'w':
-            *internalMap[currX][currY].westWall = true;
-            break;
-        case 'e':
-            *internalMap[currX][currY].eastWall = true;
-            break;
-        case 's':
-            *internalMap[currX][currY].southWall = true;
-            break;
-        default:
-            *internalMap[currX][currY].northWall = true;
-        }
-    }
-
-    if(API::wallRight()) {
-        API::setWall(currX,currY,right);
-        switch (right) {
-        case 'w':
-            *internalMap[currX][currY].westWall = true;
-            break;
-        case 'e':
-            *internalMap[currX][currY].eastWall = true;
-            break;
-        case 's':
-            *internalMap[currX][currY].southWall = true;
-            break;
-        default:
-            *internalMap[currX][currY].northWall = true;
+void Map::setWallIf(bool condition, short currX, short currY, char direction) {
+    if (condition) {
+        API::setWall(currX, currY, direction);
+        switch (direction) {
+            case 'w': *internalMap[currX][currY].westWall = true; break;
+            case 'e': *internalMap[currX][currY].eastWall = true; break;
+            case 's': *internalMap[currX][currY].southWall = true; break;
+            default:  *internalMap[currX][currY].northWall = true;
         }
     }
 }
+

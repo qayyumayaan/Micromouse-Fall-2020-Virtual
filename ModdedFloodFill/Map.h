@@ -74,6 +74,8 @@ private:
     // Checks for walls around the bot
     void wallCheck(short,short,char);
 
+    void setWallIf(bool condition, short currX, short currY, char direction);
+
     // Checks for the lowest 'flood' value among the accessible neighbors
     short findMin(vector<int>);
 
