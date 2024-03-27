@@ -95,6 +95,8 @@ private:
 
     // Fills the walls around the center once it is reached
     void centerWalls(short,short,char);
+    void setWallAndInternalMap(short x, short y, char direction);
+
 public:
     // Map object constructor which initializes the "internalMap"
     Map();

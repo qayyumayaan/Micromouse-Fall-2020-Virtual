@@ -724,194 +724,82 @@ short Map::findMinIndex(vector<int> neighbors, char dir) {
     return stepIndex;
 }
 
-// Function to set center walls after reaching one of the center cells
 void Map::centerWalls(short currX, short currY, char dir) {
     switch (dir) {
-    case 'w':
-        if(currX == 8 && currY == 8) {
-            API::setWall(8,8,'n');
-            *internalMap[8][8].northWall = true;
-
-            API::setWall(7,8,'n');
-            *internalMap[7][8].northWall = true;
-
-            API::setWall(7,8,'w');
-            *internalMap[7][8].westWall = true;
-
-            API::setWall(7,7,'w');
-            *internalMap[7][7].westWall = true;
-
-            API::setWall(7,7,'s');
-            *internalMap[7][7].southWall = true;
-
-            API::setWall(8,7,'s');
-            *internalMap[8][7].southWall = true;
-
-            API::setWall(8,7,'e');
-            *internalMap[8][7].eastWall = true;
-        }
-        else {
-            API::setWall(8,7,'s');
-            *internalMap[8][7].southWall = true;
-
-            API::setWall(7,7,'s');
-            *internalMap[7][7].southWall = true;
-
-            API::setWall(7,7,'w');
-            *internalMap[7][7].westWall = true;
-
-            API::setWall(7,8,'w');
-            *internalMap[7][8].westWall = true;
-
-            API::setWall(7,8,'n');
-            *internalMap[7][8].northWall = true;
-
-            API::setWall(8,8,'n');
-            *internalMap[8][8].northWall = true;
-
-            API::setWall(8,8,'e');
-            *internalMap[8][8].eastWall = true;
-        }
-        break;
-    case 'e':
-        if(currX == 7 && currY == 7) {
-            API::setWall(7,7,'s');
-            *internalMap[7][7].southWall = true;
-
-            API::setWall(8,7,'s');
-            *internalMap[8][7].southWall = true;
-
-            API::setWall(8,7,'e');
-            *internalMap[8][7].eastWall = true;
-
-            API::setWall(8,8,'e');
-            *internalMap[8][8].eastWall = true;
-
-            API::setWall(8,8,'n');
-            *internalMap[8][8].northWall = true;
-
-            API::setWall(7,8,'n');
-            *internalMap[7][8].northWall = true;
-
-            API::setWall(7,8,'w');
-            *internalMap[7][8].westWall = true;
-        }
-        else {
-            API::setWall(7,8,'n');
-            *internalMap[7][8].northWall = true;
-
-            API::setWall(8,8,'n');
-            *internalMap[8][8].northWall = true;
-
-            API::setWall(8,8,'e');
-            *internalMap[8][8].eastWall = true;
-
-            API::setWall(8,7,'e');
-            *internalMap[8][7].eastWall = true;
-
-            API::setWall(8,7,'s');
-            *internalMap[8][7].southWall = true;
-
-            API::setWall(7,7,'s');
-            *internalMap[7][7].southWall = true;
-
-            API::setWall(7,7,'w');
-            *internalMap[7][7].westWall = true;
-        }
-        break;
-    case 's':
-        if(currX == 8 && currY == 8) {
-            API::setWall(8,8,'e');
-            *internalMap[8][8].eastWall = true;
-
-            API::setWall(8,7,'e');
-            *internalMap[8][7].eastWall = true;
-
-            API::setWall(8,7,'s');
-            *internalMap[8][7].southWall = true;
-
-            API::setWall(7,7,'s');
-            *internalMap[7][7].southWall = true;
-
-            API::setWall(7,7,'w');
-            *internalMap[7][7].westWall = true;
-
-            API::setWall(7,8,'w');
-            *internalMap[7][8].westWall = true;
-
-            API::setWall(7,8,'n');
-            *internalMap[7][8].northWall = true;
-        }
-        else {
-            API::setWall(7,8,'w');
-            *internalMap[7][8].westWall = true;
-
-            API::setWall(7,7,'w');
-            *internalMap[7][7].westWall = true;
-
-            API::setWall(7,7,'s');
-            *internalMap[7][7].southWall = true;
-
-            API::setWall(8,7,'s');
-            *internalMap[8][7].southWall = true;
-
-            API::setWall(8,7,'e');
-            *internalMap[8][7].eastWall = true;
-
-            API::setWall(8,8,'e');
-            *internalMap[8][8].eastWall = true;
-
-            API::setWall(8,8,'n');
-            *internalMap[8][8].northWall = true;
-        }
-        break;
-    default:
-        if(currX == 7 && currY == 7) {
-            API::setWall(7,7,'w');
-            *internalMap[7][7].westWall = true;
-
-            API::setWall(7,8,'w');
-            *internalMap[7][8].westWall = true;
-
-            API::setWall(7,8,'n');
-            *internalMap[7][8].northWall = true;
-
-            API::setWall(8,8,'n');
-            *internalMap[8][8].northWall = true;
-
-            API::setWall(8,8,'e');
-            *internalMap[8][8].eastWall = true;
-
-            API::setWall(8,7,'e');
-            *internalMap[8][7].eastWall = true;
-
-            API::setWall(8,7,'s');
-            *internalMap[8][7].southWall = true;
-        }
-        else {
-            API::setWall(8,7,'e');
-            *internalMap[8][7].eastWall = true;
-
-            API::setWall(8,8,'e');
-            *internalMap[8][8].eastWall = true;
-
-            API::setWall(8,8,'n');
-            *internalMap[8][8].northWall = true;
-
-            API::setWall(7,8,'n');
-            *internalMap[7][8].northWall = true;
-
-            API::setWall(7,8,'w');
-            *internalMap[7][8].westWall = true;
-
-            API::setWall(7,7,'w');
-            *internalMap[7][7].westWall = true;
-
-            API::setWall(7,7,'s');
-            *internalMap[7][7].southWall = true;
-        }
+        case 'w':
+            if(currX == 8 && currY == 8) {
+                setWallAndInternalMap(8, 8, 'n');
+                setWallAndInternalMap(7, 8, 'n');
+                setWallAndInternalMap(7, 7, 'w');
+                setWallAndInternalMap(8, 7, 's');
+                setWallAndInternalMap(8, 7, 'e');
+            } else {
+                setWallAndInternalMap(8, 7, 's');
+                setWallAndInternalMap(7, 8, 'w');
+                setWallAndInternalMap(7, 8, 'n');
+                setWallAndInternalMap(8, 8, 'e');
+            }
+            break;
+        case 'e':
+            if(currX == 7 && currY == 7) {
+                setWallAndInternalMap(7, 7, 's');
+                setWallAndInternalMap(8, 7, 'e');
+                setWallAndInternalMap(8, 8, 'n');
+                setWallAndInternalMap(7, 8, 'w');
+            } else {
+                setWallAndInternalMap(7, 8, 'n');
+                setWallAndInternalMap(8, 8, 'e');
+                setWallAndInternalMap(8, 7, 's');
+                setWallAndInternalMap(7, 7, 'w');
+            }
+            break;
+        case 's':
+            if(currX == 8 && currY == 8) {
+                setWallAndInternalMap(8, 8, 'e');
+                setWallAndInternalMap(7, 7, 'w');
+                setWallAndInternalMap(7, 8, 'n');
+            } else {
+                setWallAndInternalMap(7, 8, 'w');
+                setWallAndInternalMap(8, 7, 's');
+                setWallAndInternalMap(8, 8, 'n');
+                setWallAndInternalMap(7, 7, 'w');
+            }
+            break;
+        default:
+            if(currX == 7 && currY == 7) {
+                setWallAndInternalMap(7, 7, 'w');
+                setWallAndInternalMap(8, 8, 'n');
+                setWallAndInternalMap(8, 7, 's');
+            } else {
+                setWallAndInternalMap(8, 7, 'e');
+                setWallAndInternalMap(7, 8, 'n');
+                setWallAndInternalMap(7, 7, 'w');
+            }
+            break;
     }
 }
+
+void Map::setWallAndInternalMap(short x, short y, char direction) {
+    API::setWall(x, y, direction);
+    switch(direction) {
+        case 'n':
+            *internalMap[x][y].northWall = true;
+            break;
+        case 'e':
+            *internalMap[x][y].eastWall = true;
+            break;
+        case 's':
+            *internalMap[x][y].southWall = true;
+            break;
+        case 'w':
+            *internalMap[x][y].westWall = true;
+            break;
+        default:
+            break;
+    }
+}
+
+
 
 char Map::turnMouse(char dir, short next) {
     switch (dir) {
