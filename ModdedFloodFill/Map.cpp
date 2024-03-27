@@ -915,80 +915,97 @@ void Map::centerWalls(short currX, short currY, char dir) {
 
 char Map::turnMouse(char dir, short next) {
     switch (dir) {
-    case 'w':
-        switch (next) {
-        case 0:
-            return 'w';
-        case 1:
-            API::turnRight();
-            API::turnRight();
-            totalTurns+=2;
-            return 'e';
-        case 2:
-            API::turnLeft();
-            totalTurns++;
-            return 's';
+        case 'w':
+            return turnWest(next);
+        case 'e':
+            return turnEast(next);
+        case 's':
+            return turnSouth(next);
         default:
-            API::turnRight();
-            totalTurns++;
-            return 'n';
-        }
-    case 'e':
-        switch (next) {
-        case 0:
-            API::turnRight();
-            API::turnRight();
-            totalTurns+=2;
-            return 'w';
-        case 1:
-            return 'e';
-        case 2:
-            API::turnRight();
-            totalTurns++;
-            return 's';
-        default:
-            API::turnLeft();
-            totalTurns++;
-            return 'n';
-        }
-    case 's':
-        switch (next) {
-        case 0:
-            API::turnRight();
-            totalTurns++;
-            return 'w';
-        case 1:
-            API::turnLeft();
-            totalTurns++;
-            return 'e';
-        case 2:
-            return 's';
-        default:
-            API::turnRight();
-            API::turnRight();
-            totalTurns+=2;
-            return 'n';
-        }
-    default:
-        switch (next) {
-        case 0:
-            API::turnLeft();
-            totalTurns++;
-            return 'w';
-        case 1:
-            API::turnRight();
-            totalTurns++;
-            return 'e';
-        case 2:
-            API::turnRight();
-            API::turnRight();
-            totalTurns+=2;
-            return 's';
-        default:
-            return 'n';
-        }
+            return turnNorth(next);
     }
 }
+
+char Map::turnWest(short next) {
+    switch (next) {
+        case 0:
+            return 'w';
+        case 1:
+            API::turnRight();
+            API::turnRight();
+            totalTurns += 2;
+            return 'e';
+        case 2:
+            API::turnLeft();
+            totalTurns++;
+            return 's';
+        default:
+            API::turnRight();
+            totalTurns++;
+            return 'n';
+    }
+}
+
+char Map::turnEast(short next) {
+    switch (next) {
+        case 0:
+            API::turnRight();
+            API::turnRight();
+            totalTurns += 2;
+            return 'w';
+        case 1:
+            return 'e';
+        case 2:
+            API::turnRight();
+            totalTurns++;
+            return 's';
+        default:
+            API::turnLeft();
+            totalTurns++;
+            return 'n';
+    }
+}
+
+char Map::turnSouth(short next) {
+    switch (next) {
+        case 0:
+            API::turnRight();
+            totalTurns++;
+            return 'w';
+        case 1:
+            API::turnLeft();
+            totalTurns++;
+            return 'e';
+        case 2:
+            return 's';
+        default:
+            API::turnRight();
+            API::turnRight();
+            totalTurns += 2;
+            return 'n';
+    }
+}
+
+char Map::turnNorth(short next) {
+    switch (next) {
+        case 0:
+            API::turnLeft();
+            totalTurns++;
+            return 'w';
+        case 1:
+            API::turnRight();
+            totalTurns++;
+            return 'e';
+        case 2:
+            API::turnRight();
+            API::turnRight();
+            totalTurns += 2;
+            return 's';
+        default:
+            return 'n';
+    }
+}
+
 
 void Map::wallCheck(short currX, short currY, char dir) {
     char front, left, right;

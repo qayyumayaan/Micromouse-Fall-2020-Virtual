@@ -85,6 +85,14 @@ private:
     // Turns the mouse towards the desired direction (0 - West, 1 - East, 2 - South, 3 - North)
     char turnMouse(char,short);
 
+    char turnWest(short next);
+
+    char turnEast(short next);
+
+    char turnSouth(short next);
+
+    char turnNorth(short next);
+
     // Fills the walls around the center once it is reached
     void centerWalls(short,short,char);
 public:
