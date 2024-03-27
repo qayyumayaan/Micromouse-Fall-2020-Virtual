@@ -503,24 +503,27 @@ int Map::futurePathCheck(short currX, short currY, char dir) {
 
 // Function to check if the path back to the center is continuous
 bool Map::solutionCheck(stack<Coor> trace) {
-    while(trace.size() > 1) {
-        short tempX = trace.top().x; short tempY = trace.top().y;
+    while (trace.size() > 1) {
+        // Store the coordinates of the current position and pop it from the stack
+        Coor current = trace.top();
         trace.pop();
-        if(tempX > trace.top().x) {
-            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(tempX - trace.top().x)) return false;
-        }
-        else if(tempX < trace.top().x) {
-            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(trace.top().x - tempX)) return false;
-        }
-        else if(tempY > trace.top().y) {
-            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(tempY - trace.top().y)) return false;
-        }
-        else {
-            if(internalMap[tempX][tempY].floodVal != internalMap[trace.top().x][trace.top().y].floodVal+(trace.top().y - tempY)) return false;
+        
+        // Calculate the differences in coordinates
+        short deltaX = current.x - trace.top().x;
+        short deltaY = current.y - trace.top().y;
+        
+        // Calculate the expected flood value based on differences in coordinates
+        int expectedFloodVal = internalMap[trace.top().x][trace.top().y].floodVal + abs(deltaX) + abs(deltaY);
+
+        // Check if the flood value matches the expected value
+        if (internalMap[current.x][current.y].floodVal != expectedFloodVal) {
+            return false;
         }
     }
+    // If all flood values are as expected, return true
     return true;
 }
+
 
 // Function to traverse maze according to the 'solution' stack
 void Map::traverse() {
